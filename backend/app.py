@@ -40,6 +40,15 @@ def get_pdf_file_contents(files):
     return text
 
 
+def get_text_chunks(content):
+    text_splitter = CharacterTextSplitter(
+        separator='\n',
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len
+    )
+    return text_splitter.split_text(content)
+
 
 @app.route('/api/v1/files/upload', methods=['POST'])
 def process_upload_files():
@@ -50,11 +59,17 @@ def process_upload_files():
     saved_files = save_files(files)
     # read files
     raw_text = get_pdf_file_contents(saved_files)
+    # get text chunks
+    text_chunks = get_text_chunks(raw_text)
+    #create vector store
+
+
     response = {
         'status': 'success',
         'code': 200,
         'saved_files': saved_files,
-        'raw_text': raw_text
+        'raw_text': raw_text,
+        'chunks': text_chunks
     }
     return response, 201
 
