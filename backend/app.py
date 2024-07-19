@@ -9,7 +9,7 @@ app = Flask(__name__)
 # llm = Ollama(model='llama3')
 #
 # response = llm.invoke('Tell me a cat joke?')
-
+# print(response)
 
 UPLOAD_FOLDER = os.path.expanduser('~') + '/pdf'
 
@@ -28,6 +28,19 @@ def save_files(files):
     return saved_files
 
 
+def get_pdf_file_contents(files):
+    text = ''
+    for file in files:
+        if file == 'files':
+            pass
+        else:
+            pdf_reader = PdfReader(file)
+            for page in pdf_reader.pages:
+                text += page.extract_text()
+    return text
+
+
+
 @app.route('/api/v1/files/upload', methods=['POST'])
 def process_upload_files():
     if 'files' not in request.files:
@@ -35,10 +48,13 @@ def process_upload_files():
     files = request.files.getlist('files') or False
     # save files
     saved_files = save_files(files)
+    # read files
+    raw_text = get_pdf_file_contents(saved_files)
     response = {
         'status': 'success',
         'code': 200,
-        'saved_files': saved_files
+        'saved_files': saved_files,
+        'raw_text': raw_text
     }
     return response, 201
 
