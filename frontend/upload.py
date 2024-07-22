@@ -27,8 +27,7 @@ def app():
                 if json_response and json_response.status_code == 200:
                     response = json_response.json()
                     if response.get('saved_files'):
-                        print(response.get('saved_files'))
-                        st.write(f':green[{len(response.get('saved_files'))} files uploaded successfully!]')
+                        st.write(f':green[{len(response.get("saved_files"))} files uploaded successfully!]')
                     else:
                         st.write(f':red[Unknown error!]')
                 else:

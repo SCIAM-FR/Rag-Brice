@@ -20,7 +20,7 @@ def app():
             json_response = requests.post('http://127.0.0.1:3000/api/v1/questions', json={'content': prompt})
 
             if json_response and json_response.status_code == 200:
-                answer = f'{json_response.json() and json_response.json().get('answer') or ''}'
+                answer = f'{json_response.json() and json_response.json().get("answer") or ''}'
             else:
                 answer = f'Nous ne trouvons pas de reponse appropriée a vitre demande'
 
