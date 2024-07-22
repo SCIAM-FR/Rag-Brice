@@ -3,8 +3,6 @@ import requests
 from PyPDF2 import PdfReader
 
 
-
-
 def get_raw_text(files):
     text = ''
     for file in files:
