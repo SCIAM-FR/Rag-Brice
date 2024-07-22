@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import Ollama
+from langchain.chains.question_answering import load_qa_chain
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from PyPDF2 import PdfReader
 import os
@@ -10,7 +11,7 @@ app = Flask(__name__)
 
 llm = Ollama(model='llama3')
 
-fastembed = FastEmbedEmbeddings()
+embeddings = FastEmbedEmbeddings()
 
 UPLOAD_FOLDER = os.path.expanduser('~') + '/RAG/pdf'
 DB_FOLDER = os.path.expanduser('~') + '/RAG/db_store'
@@ -57,7 +58,7 @@ def get_text_chunks(content):
 @app.route('/api/v1/files/upload', methods=['POST'])
 def process_upload_files():
     if 'files' not in request.files:
-        return jsonify({'success': False, 'error': 'No file part'}), 400
+        return jsonify({'success': False, 'code': 400, 'message': 'No file part'}), 400
     files = request.files.getlist('files') or False
     # save files
     saved_files = save_files(files)
@@ -66,18 +67,49 @@ def process_upload_files():
     # get text chunks
     chunks = get_text_chunks(raw_text)
     # create vector store
-    vector_store = Chroma.from_texts(texts=chunks, embedding=fastembed, persist_directory=DB_FOLDER)
+    vector_store = Chroma.from_texts(texts=chunks, embedding=embeddings, persist_directory=DB_FOLDER)
 
     vector_store.persist()
 
     response = {
-        'status': 'success',
+        'status': True,
         'code': 200,
         'saved_files': saved_files,
         'raw_text': raw_text,
         'chunks': chunks
     }
     return response, 201
+
+
+@app.route('/api/v1/questions', methods=['POST'])
+def process_questions():
+    json_question = request.json
+    if 'content' not in json_question or len(json_question) == 0:
+        return {
+            'status': False,
+            'code': 400,
+            'message': 'Content of question is required'
+        }
+
+    vector_store = Chroma(persist_directory=DB_FOLDER, embedding_function=embeddings)
+
+    retriever = vector_store.similarity_search(json_question.get('content'))
+
+    chain = load_qa_chain(llm=llm, chain_type='stuff')
+
+    response = chain({'input_documents': retriever, 'question': json_question.get('content')})
+    if response:
+        return {
+            'success': True,
+            'code': 200,
+            'message': 'A response was found successfully!',
+            'answer': response.get('output_text')
+        }
+
+
+
+
+
 
 
 def start_app():

@@ -23,11 +23,13 @@ def app():
                          uploaded_files]
 
                 # call the backend with the file
-                response_json = requests.post('http://127.0.0.1:3000/api/v1/files/upload', files=files)
-                if response_json:
-                    response = response_json.json()
+                json_response = requests.post('http://127.0.0.1:3000/api/v1/files/upload', files=files)
+                if json_response and json_response.status_code == 200:
+                    response = json_response.json()
                     if response.get('saved_files'):
                         print(response.get('saved_files'))
                         st.write(f':green[{len(response.get('saved_files'))} files uploaded successfully!]')
                     else:
                         st.write(f':red[Unknown error!]')
+                else:
+                    st.write(f':red[Unknown error!]')
