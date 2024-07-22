@@ -1,27 +1,31 @@
 from flask import Flask, request, jsonify
-from langchain_community.llms import Ollama
 from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_community.llms import Ollama
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from PyPDF2 import PdfReader
 import os
 
 app = Flask(__name__)
 
-# llm = Ollama(model='llama3')
-#
-# response = llm.invoke('Tell me a cat joke?')
-# print(response)
+llm = Ollama(model='llama3')
 
-UPLOAD_FOLDER = os.path.expanduser('~') + '/pdf'
+fastembed = FastEmbedEmbeddings()
+
+UPLOAD_FOLDER = os.path.expanduser('~') + '/RAG/pdf'
+DB_FOLDER = os.path.expanduser('~') + '/RAG/db_store'
 
 if not os.path.exists(UPLOAD_FOLDER):
-    os.mkdir(UPLOAD_FOLDER)
+    os.makedirs(UPLOAD_FOLDER)
+
+if not os.path.exists(DB_FOLDER):
+    os.makedirs(DB_FOLDER)
 
 
 def save_files(files):
     saved_files = []
     if files:
         for file in files:
-            saved_files.append(file.name)
             full_filename = UPLOAD_FOLDER + '/' + file.filename
             file.save(full_filename)
             saved_files.append(full_filename)
@@ -60,22 +64,24 @@ def process_upload_files():
     # read files
     raw_text = get_pdf_file_contents(saved_files)
     # get text chunks
-    text_chunks = get_text_chunks(raw_text)
-    #create vector store
+    chunks = get_text_chunks(raw_text)
+    # create vector store
+    vector_store = Chroma.from_texts(texts=chunks, embedding=fastembed, persist_directory=DB_FOLDER)
 
+    vector_store.persist()
 
     response = {
         'status': 'success',
         'code': 200,
         'saved_files': saved_files,
         'raw_text': raw_text,
-        'chunks': text_chunks
+        'chunks': chunks
     }
     return response, 201
 
 
 def start_app():
-    app.run(host='192.168.1.81', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
 
 
 if __name__ == '__main__':
