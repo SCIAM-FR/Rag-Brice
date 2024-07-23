@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-import upload, home, chat, contact
+import upload, home, chat
 
 st.set_page_config(
     page_title="SCIAM RAG"
@@ -30,8 +30,8 @@ class MultiApp:
         with st.sidebar:
             app = option_menu(
                 menu_title='SCIAM RAG',
-                options=['Home', 'Chat', 'Importer', 'Contact'],
-                icons=['house', 'chat-dots', 'file-arrow-down', 'envelope-dash'],
+                options=['Home', 'Chat', 'Importer'],
+                icons=['house', 'chat-dots', 'file-arrow-down'],
                 menu_icon='cpu',
                 default_index=0,
                 styles={
@@ -63,7 +63,5 @@ class MultiApp:
             chat.app()
         if app == 'Importer':
             upload.app()
-        if app == 'Contact':
-            contact.app()
 
 MultiApp().run()

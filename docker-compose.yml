@@ -1,17 +1,28 @@
-version: '3.8'
-
 services:
-  backend:
+  sciam_rag_back:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    container_name: sciam_rag_back
     ports:
       - "3000:3000"
     volumes:
-      - './RAG:/home/RAG'
-  frontend:
+      - ./rag:/root/RAG
+    networks:
+      - sciam_rag_net
+    restart: always
+  sciam_rag_front:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    container_name: sciam_rag_front
     ports:
       - "8080:8501"
+    networks:
+      - sciam_rag_net
+    depends_on:
+      - sciam_rag_back
+    restart: always
+networks:
+  sciam_rag_net:
+    driver: bridge
